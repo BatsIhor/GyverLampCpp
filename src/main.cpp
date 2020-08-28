@@ -247,15 +247,14 @@ void setup() {
 
     Serial.println(F("AutoConnect started"));
     lampWebServer->onConnected([](bool isConnected) {
-        connectFinished = true;
         Serial.println(F("AutoConnect finished"));
-        LocalDNS::Initialize();
-        if (localDNS->begin()) {
-            localDNS->addService(F("http"), F("tcp"), webServerPort);
-        } else {
-            Serial.println(F("An Error has occurred while initializing mDNS"));
-        }
         if (isConnected) {
+            LocalDNS::Initialize();
+            if (localDNS->begin()) {
+                localDNS->addService(F("http"), F("tcp"), webServerPort);
+            } else {
+                Serial.println(F("An Error has occurred while initializing mDNS"));
+            }
             TimeClient::Initialize();
             MqttClient::Initialize();
         } else if (mySettings->buttonSettings.pin > 0) {
@@ -276,6 +275,7 @@ void setup() {
         if (!setupMode) {
             effectsManager->activateEffect(mySettings->generalSettings.activeEffect);
         }
+        connectFinished = true;
     });
     lampWebServer->autoConnect();
 
@@ -302,9 +302,6 @@ void loop() {
     localDNS->loop();
     if (lampWebServer->isConnected()) {
         timeClient->loop();
-#if defined(ESP32)
-        mqtt->loop();
-#endif
     } else if (setupMode) {
         return;
     }
